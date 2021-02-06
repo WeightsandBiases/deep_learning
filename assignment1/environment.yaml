@@ -1,4 +1,4 @@
-name: cs7643-a1
+name: dl
 channels:
   - defaults
 dependencies:

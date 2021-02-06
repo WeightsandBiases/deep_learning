@@ -46,20 +46,12 @@ def load_mnist_trainval():
     print("Training data loaded with {count} images".format(count=len(data)))
 
     # split training/validation data
-    train_data = None
-    train_label = None
-    val_data = None
-    val_label = None
-    #############################################################################
-    # TODO:                                                                     #
-    #    1) Split the entire training set to training data and validation       #
-    #       data. Use 80% of your data for training and 20% of your data for    #
-    #       validation                                                          #
-    #############################################################################
-
-    #############################################################################
-    #                              END OF YOUR CODE                             #
-    #############################################################################
+    # use 80% of data as training and 20% as validation
+    length_training = (len(data) * 4) // 5
+    train_data = data[:length_training]
+    train_label = label[:length_training]
+    val_data = data[length_training:]
+    val_label = label[length_training:]
 
     return train_data, train_label, val_data, val_label
 
@@ -92,10 +84,10 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
         batched_data: A list whose elements are batches of images.
         batched_label: A list whose elements are batches of labels
     '''
-    batched_data = None
-    batched_label = None
     if seed:
         random.seed(seed)
+    else:
+        random.seed(random.randint(0, len(data)))
     #############################################################################
     # TODO:
     #    1) Shuffle data and label if shuffle=True                              #
@@ -104,9 +96,15 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
     #    batch size                                                             #
     #############################################################################
 
-    #############################################################################
-    #                              END OF YOUR CODE                             #
-    #############################################################################
+    # do the cupid shuffle
+    random_data = random.shuffle(data)
+    random_label = random.shuffle(label)
+    # batch it up
+    for i in range(0, len(random_data), batch_size):
+        
+    if len(random_data) % batch_size != 0:
+
+
 
     return batched_data, batched_label
 
