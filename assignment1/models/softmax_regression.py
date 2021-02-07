@@ -24,6 +24,49 @@ class SoftmaxRegression(_baseNetwork):
         self.weights['W1'] = 0.001 * np.random.randn(self.input_size, self.num_classes)
         self.gradients['W1'] = np.zeros((self.input_size, self.num_classes))
 
+    def delta_cross_entropy(self, x_pred, y):
+        '''
+        calculate the derivative of cross entropy combined with softmax
+        credit to Piazza forums and 
+        https://deepnotes.io/softmax-crossentropy?fbclid=IwAR1FQb_iaO0dqbjanigoUy0116VkOrxuWu_hd0--Y1ioi03Vlk0FgN0KFIM#derivative-of-cross-entropy-loss-with-softmax
+        for derivation of cross entropy and softmax gradients
+        :param x_pred: predictions of forward pass
+        :param y: truth labels
+        :return
+            gradient: gradient of the cross entropy and softmax terms
+        '''
+        y_len = len(y)
+        gradient = self.softmax(x_pred)
+        gradient[range(y_len), y] -= 1
+        gradient /= y_len
+        return gradient
+
+    def forward_pass(self, X):
+        '''
+        forward pass of softmax
+        :param X: a batch of image (N, 28 x 28)
+        '''
+        self.layer_1 = np.matmul(X, self.weights['W1'])
+        self.layer_1_out = self.ReLU(self.layer_1)
+        return self.softmax(self.layer_1_out)
+
+    def backward_pass(self, X, x_pred, y):
+        '''
+        backward pass of softmax
+        :param x_pred: prediction result
+        :param y: truth labels
+        '''
+        # dL/dW = dL/d_xentropy * d_xentropy/d_ReLU*dReLU/dWX*dX/dW
+        # dL/d_xentropy
+        grad_layer_1_out = self.delta_cross_entropy(self.layer_1_out, y)
+        # d_xentropy/d_ReLU
+        grad_layer_1 = self.ReLU_dev(self.layer_1)
+        dL_dWx = np.multiply(grad_layer_1_out, grad_layer_1)
+        dL_dW = np.matmul(np.transpose(X), dL_dWx)
+
+        self.gradients['W1'] = dL_dW
+
+
     def forward(self, X, y, mode='train'):
         '''
         Compute loss and gradients using softmax with vectorization.
@@ -45,10 +88,12 @@ class SoftmaxRegression(_baseNetwork):
         #   Store your intermediate outputs before ReLU for backwards               #
         #############################################################################
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        x_pred = self.forward_pass(X)
+        loss = self.cross_entropy_loss(x_pred, y)
+        accuracy = self.compute_accuracy(x_pred, y)
+        
         if mode != 'train':
+
             return loss, accuracy
 
         #############################################################################
@@ -58,9 +103,8 @@ class SoftmaxRegression(_baseNetwork):
         #        2) Store the gradients in self.gradients                           #
         #############################################################################
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        self.backward_pass(X, x_pred, y)
+
         return loss, accuracy
 
 

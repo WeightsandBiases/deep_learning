@@ -97,13 +97,25 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
     #############################################################################
 
     # do the cupid shuffle
-    random_data = random.shuffle(data)
-    random_label = random.shuffle(label)
+    # create shallow copies as random shuffle is in place
+    # want to preserve the order of original lists
+    random_data = data[:]
+    random_label = label[:]
+    random.shuffle(random_data)
+    random.shuffle(random_label)
     # batch it up
+    batched_data = list()
+    batched_label = list()
     for i in range(0, len(random_data), batch_size):
-        
-    if len(random_data) % batch_size != 0:
+        batched_data.append(random_data[i:i + batch_size])
+        batched_label.append(random_label[i:i + batch_size])
 
+    # last batch, if cannot be evenly split
+    n_remaining_data = len(random_data) % batch_size
+    if n_remaining_data != 0:
+        last_i = len(batched_data) * batch_size
+        batched_data.append(random_data[last_i:])
+        batched_label.append(random_label[last_i:])
 
 
     return batched_data, batched_label

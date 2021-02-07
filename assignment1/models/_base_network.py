@@ -23,17 +23,15 @@ class _baseNetwork:
         :return:
             prob: softmax probabilities (N, num_classes)
         '''
-        prob = None
+
         #############################################################################
         # TODO:                                                                     #
         #    1) Calculate softmax scores of input images                            #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-
-        return prob
+        # credit to Piazza forums and https://github.com/parasdahal/deepnet/blob/master/deepnet/utils.py?fbclid=IwAR3qLC1Njq0L_rc7JmCWVuhWuKerzjuofYmvLQVzn9QnUyZmhx9XBkGW9f4
+        # for implementation of numerically stable softmax function
+        exps = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+        return exps / np.sum(exps, axis=1, keepdims=True)
 
     def cross_entropy_loss(self, x_pred, y):
         '''
@@ -42,16 +40,13 @@ class _baseNetwork:
         :param y: Labels of instances in the batch
         :return: The computed Cross-Entropy Loss
         '''
-        loss = None
         #############################################################################
         # TODO:                                                                     #
         #    1) Implement Cross-Entropy Loss                                        #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-        return loss
+        y_len = len(y)
+        cross_entropy_i = -np.log(x_pred[range(y_len), y])
+        return np.sum(cross_entropy_i) / y_len
 
     def compute_accuracy(self, x_pred, y):
         '''
@@ -60,16 +55,13 @@ class _baseNetwork:
         :param y: Labels of instances in the batch
         :return: The accuracy of the batch
         '''
-        acc = None
         #############################################################################
         # TODO:                                                                     #
         #    1) Implement the accuracy function                                     #
         #############################################################################
+        x_max = np.argmax(x_pred, axis=1)
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-        return acc
+        return np.sum(x_max == y) / len(y) 
 
     def sigmoid(self, X):
         '''
@@ -79,15 +71,10 @@ class _baseNetwork:
         :return:
             out: the value after the sigmoid activation is applied to the input (N, num_classes)
         '''
-        out = None
         #############################################################################
         # TODO: Comput the sigmoid activation on the input                          #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-        return out
+        return 1.0 / (1.0 + np.exp(-X))
 
     def sigmoid_dev(self, x):
         '''
@@ -95,16 +82,12 @@ class _baseNetwork:
         :param x: Input data
         :return: The derivative of sigmoid function at x
         '''
-        ds = None
         #############################################################################
         # TODO:                                                                     #
         #    1) Implement the derivative of Sigmoid function                        #
         #############################################################################
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-        return ds
+        return self.sigmoid(x)*(1-self.sigmoid(x))
 
     def ReLU(self, X):
         '''
@@ -114,15 +97,11 @@ class _baseNetwork:
         :return:
             out: the value after the ReLU activation is applied to the input (N, num_classes)
         '''
-        out = None
         #############################################################################
         # TODO: Comput the ReLU activation on the input                          #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
-        return out
+        
+        return np.maximum(0, X)
 
     def ReLU_dev(self,X):
         '''
@@ -132,7 +111,6 @@ class _baseNetwork:
         :return:
             out: gradient of ReLU given input X
         '''
-        out = None
         #############################################################################
         # TODO: Comput the gradient of ReLU activation                              #
         #############################################################################
@@ -140,4 +118,4 @@ class _baseNetwork:
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
-        return out
+        return 1.0 * (X>0)
