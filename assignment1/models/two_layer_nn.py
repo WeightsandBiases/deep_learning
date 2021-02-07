@@ -35,30 +35,22 @@ class TwoLayerNet(_baseNetwork):
         self.gradients['W2'] = np.zeros((self.hidden_size, self.num_classes))
         self.gradients['b2'] = np.zeros(self.num_classes)
 
-    def activation_fn(self, X):
+    def delta_cross_entropy(self, x_pred, y):
         '''
-        :param X: a batch of images (N, input size)
-        :return:
-            result of activation function
-        '''
-        return 1.0 / (1.0 + np.exp(-X))
-
-    def softmax(self, X):
-        '''
-        :param X: scores from a layer
-        :return: 
-            softmax result converting scores into probabilties
-        '''
-        return np.exp(X) / np.sum(np.exp(X), axis=0)
-
-    def cross_entropy(self, y_predict, y):
-        '''
-        calculate the cross entropy
-
-        :param y_predict: predictions made by DL
+        calculate the derivative of cross entropy combined with softmax
+        credit to Piazza forums and 
+        https://deepnotes.io/softmax-crossentropy?fbclid=IwAR1FQb_iaO0dqbjanigoUy0116VkOrxuWu_hd0--Y1ioi03Vlk0FgN0KFIM#derivative-of-cross-entropy-loss-with-softmax
+        for derivation of cross entropy and softmax gradients
+        :param x_pred: predictions of forward pass
         :param y: truth labels
+        :return
+            gradient: gradient of the cross entropy and softmax terms
         '''
-        return -np.sum([y_predict[i]*np.log2(y[i]) for i in range(len(y_predict))])
+        y_len = len(y)
+        gradient = self.softmax(x_pred)
+        gradient[range(y_len), y] -= 1
+        gradient /= y_len
+        return gradient
 
     def forward_pass(self, X):
         '''
@@ -67,20 +59,21 @@ class TwoLayerNet(_baseNetwork):
             result of foward pass
         '''
         # muptiply layer by weights plus bias
-        layer_1 = np.matmul(X, self.weights['W1'] + self.weights['b1'])
+        self.layer_1 = np.matmul(X, self.weights['W1']) + self.weights['b1']
         # apply activation function between layer 1 and 2
-        layer_1_out = self.activation_fn(layer_1)
-        layer_2 = np.matmul(layer_1_out, self.weights['W2'] + self.weights['b2'])
+        self.layer_1_out = self.sigmoid(self.layer_1)
+        self.layer_2 = np.matmul(self.layer_1_out, self.weights['W2']) + self.weights['b2']
         # apply softmax function before cross entropy
-        return self.softmax(layer_2)
+        return self.softmax(self.layer_2)
 
-    def backward_pass(self, output):
+    def backward_pass(self, X, x_pred, y):
         '''
         :param output: the output of the forward pass 
         :return:
             none, but updates the internal weights
         '''
-        raise NotImplementedError
+        grad_layer_2_out = self.delta_cross_entropy(self.layer_2)
+        
         
 
     def forward(self, X, y, mode='train'):
@@ -110,9 +103,9 @@ class TwoLayerNet(_baseNetwork):
         #    2) Compute Cross-Entropy Loss and batch accuracy based on network      #
         #       outputs                                                             #
         #############################################################################
-        y_predict = self.forward_pass(X)
-        loss = self.cross_entropy(y_predict, y)
-        accuracy = y - y_predict
+        x_pred = self.forward_pass(X)
+        loss = self.cross_entropy_loss(x_pred, y)
+        accuracy = self.compute_accuracy(x_pred, y)
 
 
         #############################################################################
