@@ -46,6 +46,7 @@ class _baseNetwork:
         #############################################################################
         y_len = len(y)
         cross_entropy_i = -np.log(x_pred[range(y_len), y])
+        # print(y_len)
         return np.sum(cross_entropy_i) / y_len
 
     def compute_accuracy(self, x_pred, y):
@@ -60,7 +61,7 @@ class _baseNetwork:
         #    1) Implement the accuracy function                                     #
         #############################################################################
         x_max = np.argmax(x_pred, axis=1)
-
+        # print(len(y))
         return np.sum(x_max == y) / len(y) 
 
     def sigmoid(self, X):

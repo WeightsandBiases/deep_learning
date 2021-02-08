@@ -72,8 +72,21 @@ class TwoLayerNet(_baseNetwork):
         :return:
             none, but updates the internal weights
         '''
-        grad_layer_2_out = self.delta_cross_entropy(self.layer_2)
-        
+        # d_L/d_w = d_Z/d_W * d_L/d_Z
+        # layer 2
+        dL_dB = self.delta_cross_entropy(self.layer_2, y)
+        self.gradients['W2'] = np.matmul(np.transpose(self.layer_1_out), dL_dB)
+        self.gradients['b2'] = np.sum(dL_dB, axis=0)
+        # layer 1
+        # dL/dW1 = dZ_1/dW_1 * dA/dZ_1 * dB/dA * dL/dB
+        dB_dA = self.weights['W2']
+        dA_dZ_1 = self.sigmoid_dev(self.layer_1)
+        dZ_1_dW_1 = np.transpose(X)
+        # all together now
+        dL_dA = np.matmul(dB_dA, dL_dB.T)
+        dL_dZ_1 = np.multiply(dA_dZ_1, dL_dA.T)
+        self.gradients['W1'] = np.matmul(dZ_1_dW_1, dL_dZ_1)
+        self.gradients['b1'] = np.sum(dL_dZ_1, axis=0)
         
 
     def forward(self, X, y, mode='train'):
@@ -108,6 +121,7 @@ class TwoLayerNet(_baseNetwork):
         accuracy = self.compute_accuracy(x_pred, y)
 
 
+
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
@@ -126,7 +140,11 @@ class TwoLayerNet(_baseNetwork):
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
+        if mode != 'train':
 
+            return loss, accuracy
+
+        self.backward_pass(X, x_pred, y)
 
         return loss, accuracy
 

@@ -47,8 +47,8 @@ class SoftmaxRegression(_baseNetwork):
         :param X: a batch of image (N, 28 x 28)
         '''
         self.layer_1 = np.matmul(X, self.weights['W1'])
-        self.layer_1_out = self.ReLU(self.layer_1)
-        return self.softmax(self.layer_1_out)
+        self.layer_1_ReLu = self.ReLU(self.layer_1)
+        return self.softmax(self.layer_1_ReLu)
 
     def backward_pass(self, X, x_pred, y):
         '''
@@ -58,7 +58,7 @@ class SoftmaxRegression(_baseNetwork):
         '''
         # dL/dW = dL/d_xentropy * d_xentropy/d_ReLU*dReLU/dWX*dX/dW
         # dL/d_xentropy
-        grad_layer_1_out = self.delta_cross_entropy(self.layer_1_out, y)
+        grad_layer_1_out = self.delta_cross_entropy(self.layer_1_ReLu, y)
         # d_xentropy/d_ReLU
         grad_layer_1 = self.ReLU_dev(self.layer_1)
         dL_dWx = np.multiply(grad_layer_1_out, grad_layer_1)

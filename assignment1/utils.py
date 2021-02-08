@@ -86,8 +86,6 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
     '''
     if seed:
         random.seed(seed)
-    else:
-        random.seed(random.randint(0, len(data)))
     #############################################################################
     # TODO:
     #    1) Shuffle data and label if shuffle=True                              #
@@ -99,14 +97,18 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
     # do the cupid shuffle
     # create shallow copies as random shuffle is in place
     # want to preserve the order of original lists
-    random_data = data[:]
-    random_label = label[:]
-    random.shuffle(random_data)
-    random.shuffle(random_label)
+    data_len = len(data)
+    random_idxs = np.random.choice(data_len, data_len, replace=False)
+    random_data = np.array(data)[random_idxs]
+    random_label = np.array(label)[random_idxs]
+    # random_data = np.array(data)
+    # random_label = np.array(label)
     # batch it up
     batched_data = list()
     batched_label = list()
     for i in range(0, len(random_data), batch_size):
+        if i + batch_size > len(random_data):
+            break
         batched_data.append(random_data[i:i + batch_size])
         batched_label.append(random_label[i:i + batch_size])
 
@@ -116,8 +118,6 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
         last_i = len(batched_data) * batch_size
         batched_data.append(random_data[last_i:])
         batched_label.append(random_label[last_i:])
-
-
     return batched_data, batched_label
 
 
