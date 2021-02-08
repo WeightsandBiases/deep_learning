@@ -97,12 +97,17 @@ def generate_batched_data(data, label, batch_size=32, shuffle=False, seed=None):
     # do the cupid shuffle
     # create shallow copies as random shuffle is in place
     # want to preserve the order of original lists
-    data_len = len(data)
-    random_idxs = np.random.choice(data_len, data_len, replace=False)
-    random_data = np.array(data)[random_idxs]
-    random_label = np.array(label)[random_idxs]
-    # random_data = np.array(data)
-    # random_label = np.array(label)
+    random_data = data[:]
+    random_label = label[:]
+    if shuffle:
+        # preserve correspondence by using zip
+        data_and_label = list(zip(random_data, random_label))
+        random.shuffle(data_and_label)
+        random_data, random_label = zip(*data_and_label)
+
+    # convert to np.array
+    random_data = np.array(random_data)
+    random_label = np.array(random_label)
     # batch it up
     batched_data = list()
     batched_label = list()
@@ -209,7 +214,7 @@ def plot_curves(train_loss_history, train_acc_history, valid_loss_history, valid
     #    2) Plot learning curves of training and validation accuracy            #
     #############################################################################
     fig, axs = plt.subplots(2, sharex=True)
-    fig.suptitle('Deep Learning Losses and Accuracy')
+    fig.suptitle('2 Layer Learning Rate 1.0')
     axs[0].plot(train_loss_history, label='training loss')
     axs[0].plot(valid_loss_history, label='validation loss')
     axs[0].legend()
@@ -219,7 +224,7 @@ def plot_curves(train_loss_history, train_acc_history, valid_loss_history, valid
     axs[1].legend()
     axs[1].set_ylabel('Loss')
     plt.xlabel('Epochs')
-    plt.savefig('plot.png', dpi=300)
+    plt.savefig('2_layer_LR_1.0_plot.png', dpi=300)
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
