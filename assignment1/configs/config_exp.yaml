@@ -9,3 +9,5 @@ Train:
 Model:
   type: TwoLayerNet # SoftmaxRegression or TwoLayerNet
   hidden_size: 128 # only applicable for TwolayerNet
+
+
