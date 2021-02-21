@@ -214,7 +214,7 @@ def plot_curves(train_loss_history, train_acc_history, valid_loss_history, valid
     #    2) Plot learning curves of training and validation accuracy            #
     #############################################################################
     fig, axs = plt.subplots(2, sharex=True)
-    fig.suptitle('2 Layer Learning Rate 1.0')
+    fig.suptitle('2 Layer Learning Rate 5e-2')
     axs[0].plot(train_loss_history, label='training loss')
     axs[0].plot(valid_loss_history, label='validation loss')
     axs[0].legend()
@@ -222,9 +222,9 @@ def plot_curves(train_loss_history, train_acc_history, valid_loss_history, valid
     axs[1].plot(train_acc_history, label='training accuracy')
     axs[1].plot(valid_acc_history, label='validation accuracy')
     axs[1].legend()
-    axs[1].set_ylabel('Loss')
+    axs[1].set_ylabel('Accuracy')
     plt.xlabel('Epochs')
-    plt.savefig('2_layer_LR_1.0_plot.png', dpi=300)
+    plt.savefig('2_layer_best_plot.png', dpi=300)
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################

@@ -68,8 +68,10 @@ def run():
     batched_test_data, batched_test_label = generate_batched_data(test_data, test_label, batch_size=args.batch_size)
     _, test_acc = evaluate(batched_test_data, batched_test_label, best_model) # test the best model
     if args.debug:
+        
+        print("Training Accuracy: {accuracy:.4f}".format(accuracy=train_acc_history[-1]))
+        print("Test Accuracy: {accuracy:.4f}".format(accuracy=valid_acc_history[-1]))
         print("Final Accuracy on Test Data: {accuracy:.4f}".format(accuracy=test_acc))
-
 
     return train_loss_history, train_acc_history, valid_loss_history, valid_acc_history
 if __name__ == '__main__':
