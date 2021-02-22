@@ -32,6 +32,26 @@ class Conv2D:
         self.dw = None
         self.db = None
 
+    def convolve_2D(self, img, kernel):
+        import pdb
+        if len(img.shape) == 2:
+            img_h, img_w = img.shape
+        elif len(img.shape) == 3:
+            img_c, img_h, img_w = img.shape
+        kernel_h, kernel_w = kernel[0].shape
+        out_h = int(img_h - kernel_h + 2 * self.padding / self.stride + 1)
+        out_w = int(img_w - kernel_w + 2 * self.padding / self.stride + 1)
+        out = np.zeros((out_h, out_w))
+        for i, x in enumerate(range(0, img_w - kernel_w, self.stride)):
+            for j, y in enumerate(range(0, img_h - kernel_h, self.stride)):
+                for c in range(img_c):
+                    try:
+                        img_slice = img[c, y: y + kernel_h, x: x + kernel_w]
+                        out[j, i] += np.dot(kernel[c], img_slice).sum()
+                    except ValueError as e:
+                        pdb.set_trace()
+        return out
+
     def forward(self, x):
         '''
         The forward pass of convolution
@@ -39,17 +59,28 @@ class Conv2D:
         :return: output data of shape (N, self.out_channels, H', W') where H' and W' are determined by the convolution
                  parameters. Save necessary variables in self.cache for backward pass
         '''
-        out = None
         #############################################################################
         # TODO: Implement the convolution forward pass.                             #
         # Hint: 1) You may use np.pad for padding.                                  #
         #       2) You may implement the convolution with loops                     #
         #############################################################################
+        
 
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
-        self.cache = x
+        n_pad = ((0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding))
+        x_padded = np.pad(x, pad_width=n_pad, mode='constant')
+        self.cache = x_padded
+        out = list()
+        for img_i in range(x.shape[0]):
+            for channel_out_i in range(self.out_channels):
+                out_c = list()
+                img = x[img_i]
+                kernel = self.weight[channel_out_i]
+                out_c.append(self.convolve_2D(img, kernel))
+            out.append(np.array(out_c))
+        out = np.array(out)
         return out
 
     def backward(self, dout):

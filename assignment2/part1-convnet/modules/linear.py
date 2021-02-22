@@ -29,17 +29,16 @@ class Linear:
         :param x: input data, (N, d1, d2, ..., dn) where sum of d1, d2, ..., dn is equal to self.in_dim
         :return: The output computed by Wx+b. Save necessary variables in cache for backward
         '''
-        out = None
         #############################################################################
         # TODO: Implement the forward pass.                                         #
         #    HINT: You may want to flatten the input first                          #
         #############################################################################
-
+        x = x.reshape((x.shape[0], self.in_dim))
+        self.cache = np.matmul(x, self.weight) + self.bias
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
-        self.cache = x
-        return out
+        return self.cache
 
     def backward(self, dout):
         '''
@@ -48,6 +47,9 @@ class Linear:
         :return: nothing but dx, dw, and db of self should be updated
         '''
         x = self.cache
+        self.dx = self.weight
+        self.db = 0
+        self.dw = x
         #############################################################################
         # TODO: Implement the convolution backward pass.                            #
         #############################################################################
