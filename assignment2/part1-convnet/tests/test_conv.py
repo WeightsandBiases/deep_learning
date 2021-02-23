@@ -43,6 +43,8 @@ class TestConv(unittest.TestCase):
                                    [0.59480972, 0.56776003]],
                                   [[2.36270298, 2.36904306],
                                    [2.38090835, 2.38247847]]]]])
+        print(out - correct_out)
+        print(b)
         diff = rel_error(out, correct_out)
         self.assertAlmostEquals(diff, 0, places=7)
 

@@ -32,25 +32,19 @@ class Conv2D:
         self.dw = None
         self.db = None
 
-    def convolve_2D(self, img, kernel):
-        import pdb
+    def convolve_2D(self, img, kernel, out, img_i, channel_out_i):
         if len(img.shape) == 2:
             img_h, img_w = img.shape
         elif len(img.shape) == 3:
             img_c, img_h, img_w = img.shape
-        kernel_h, kernel_w = kernel[0].shape
-        out_h = int(img_h - kernel_h + 2 * self.padding / self.stride + 1)
-        out_w = int(img_w - kernel_w + 2 * self.padding / self.stride + 1)
-        out = np.zeros((out_h, out_w))
+        kernel_h, kernel_w = (self.kernel_size, self.kernel_size)
         for i, x in enumerate(range(0, img_w - kernel_w, self.stride)):
             for j, y in enumerate(range(0, img_h - kernel_h, self.stride)):
                 for c in range(img_c):
-                    try:
-                        img_slice = img[c, y: y + kernel_h, x: x + kernel_w]
-                        out[j, i] += np.dot(kernel[c], img_slice).sum()
-                    except ValueError as e:
-                        pdb.set_trace()
-        return out
+                    img_slice = img[c, y: y + kernel_h, x: x + kernel_w]
+                    out[img_i, channel_out_i, j, i] += np.dot(kernel[c].flatten(), img_slice.flatten())
+                # add bias
+        out[img_i, channel_out_i] += self.bias[channel_out_i]
 
     def forward(self, x):
         '''
@@ -72,15 +66,16 @@ class Conv2D:
         n_pad = ((0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding))
         x_padded = np.pad(x, pad_width=n_pad, mode='constant')
         self.cache = x_padded
-        out = list()
+        N, C, H, W = x.shape
+        kernel_h, kernel_w = (self.kernel_size, self.kernel_size)
+        H_prime = int(H - kernel_h + 2 * self.padding / self.stride + 1)
+        W_prime = int(W - kernel_w + 2 * self.padding / self.stride + 1)
+        out = np.zeros((N, self.out_channels, H_prime, W_prime))
         for img_i in range(x.shape[0]):
             for channel_out_i in range(self.out_channels):
-                out_c = list()
-                img = x[img_i]
+                img = x_padded[img_i]
                 kernel = self.weight[channel_out_i]
-                out_c.append(self.convolve_2D(img, kernel))
-            out.append(np.array(out_c))
-        out = np.array(out)
+                self.convolve_2D(img, kernel, out, img_i, channel_out_i)
         return out
 
     def backward(self, dout):
