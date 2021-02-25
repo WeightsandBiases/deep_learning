@@ -38,12 +38,12 @@ class Conv2D:
         elif len(img.shape) == 3:
             img_c, img_h, img_w = img.shape
         kernel_h, kernel_w = (self.kernel_size, self.kernel_size)
-        for i, x in enumerate(range(0, img_w - kernel_w, self.stride)):
-            for j, y in enumerate(range(0, img_h - kernel_h, self.stride)):
+        for i, x in enumerate(range(0, img_w - kernel_w + 1, self.stride)):
+            for j, y in enumerate(range(0, img_h - kernel_h + 1, self.stride)):
                 for c in range(img_c):
                     img_slice = img[c, y: y + kernel_h, x: x + kernel_w]
                     out[img_i, channel_out_i, j, i] += np.dot(kernel[c].flatten(), img_slice.flatten())
-                # add bias
+        # add bias
         out[img_i, channel_out_i] += self.bias[channel_out_i]
 
     def forward(self, x):
@@ -59,10 +59,6 @@ class Conv2D:
         #       2) You may implement the convolution with loops                     #
         #############################################################################
         
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
         n_pad = ((0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding))
         x_padded = np.pad(x, pad_width=n_pad, mode='constant')
         self.cache = x_padded
@@ -84,14 +80,23 @@ class Conv2D:
         :param dout: upstream gradients
         :return: nothing but dx, dw, and db of self should be updated
         '''
-        x = self.cache
+        input_padded = self.cache
+        N, out_C, H_prime, W_prime = dout.shape
+        self.db = np.sum(dout, axis=(0, 2, 3))
+        self.dw = np.zeros((self.out_channels, self.in_channels,  self.kernel_size, self.kernel_size))
+        img_c, img_h, img_w = input_padded[0].shape
+        kernel_w, kernel_h = (self.kernel_size, self.kernel_size)
+        for out_C_i in range(out_C):
+            for i, x in enumerate(range(0, img_w - kernel_w + 1, self.stride)):
+                for j, y in enumerate(range(0, img_h - kernel_h + 1, self.stride)):
+                    for in_C_i in range(img_c):
+                        img_slice = input_padded[in_C_i, y: y + kernel_h, x: x + kernel_w]
+                        self.dw[out_C_i, in_C_i, j, i] += np.dot(dout, img_slice.T) 
+                
+
         #############################################################################
         # TODO: Implement the convolution backward pass.                            #
         # Hint:                                                                     #
         #       1) You may implement the convolution with loops                     #
         #       2) don't forget padding when computing dx                           #
-        #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
         #############################################################################

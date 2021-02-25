@@ -43,9 +43,8 @@ class TestConv(unittest.TestCase):
                                    [0.59480972, 0.56776003]],
                                   [[2.36270298, 2.36904306],
                                    [2.38090835, 2.38247847]]]]])
-        print(out - correct_out)
-        print(b)
         diff = rel_error(out, correct_out)
+
         self.assertAlmostEquals(diff, 0, places=7)
 
     def test_backward(self):
@@ -57,8 +56,12 @@ class TestConv(unittest.TestCase):
         dx_num = eval_numerical_gradient_array(lambda x: self._conv_forward(x, w, b, 3, 2, 3, 1, 1), x, dout)
         dw_num = eval_numerical_gradient_array(lambda w: self._conv_forward(x, w, b, 3, 2, 3, 1, 1), w, dout)
         db_num = eval_numerical_gradient_array(lambda b: self._conv_forward(x, w, b, 3, 2, 3, 1, 1), b, dout)
-
+        print("dx shape", dx_num.shape)
+        print("dw shape", dw_num.shape)
+        print("db shape", db_num.shape)
+        print("db", db_num)
         dx, dw, db = self._conv_backward(x, w, b, dout, 3, 2, 3, 1, 1)
+        print("db_res", db)
 
         self.assertAlmostEquals(rel_error(dx, dx_num), 0, places=6)
         self.assertAlmostEquals(rel_error(dw, dw_num), 0, places=6)
