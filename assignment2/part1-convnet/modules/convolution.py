@@ -79,7 +79,15 @@ class Conv2D:
         The backward pass of convolution
         :param dout: upstream gradients
         :return: nothing but dx, dw, and db of self should be updated
+        credit to https://towardsdatascience.com/backpropagation-in-a-convolutional-layer-24c8d64d8509
+        for ideas on rotating kernel in backward pass
         '''
+        #############################################################################
+        # TODO: Implement the convolution backward pass.                            #
+        # Hint:                                                                     #
+        #       1) You may implement the convolution with loops                     #
+        #       2) don't forget padding when computing dx                           #
+        #############################################################################
         input_padded = self.cache
         N, out_C, H_prime, W_prime = dout.shape
         img_c, img_h, img_w = input_padded[0].shape
@@ -89,8 +97,6 @@ class Conv2D:
         self.dx = np.zeros((N, self.in_channels, img_h, img_w))
         n_pad = ((0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding))
         d_out_padded = np.pad(dout, pad_width=n_pad, mode='constant')
-        print(dout.shape)
-        print("KERNEL SIZE", self.kernel_size)
         for img_i in range(N):
             for out_C_i in range(out_C):
                 for i, x in enumerate(range(0, img_w - W_prime + 1, self.stride)):
@@ -105,11 +111,6 @@ class Conv2D:
                             kernel_180 = np.rot90(np.rot90(kernel))
                             dout_padded_slice = d_out_padded[img_i, out_C_i, y: y + kernel_h, x: x + kernel_w]
                             self.dx[img_i, in_C_i, j, i] += np.dot(dout_padded_slice.flatten(), kernel_180.flatten())
-                
+        # remove padding
+        self.dx = self.dx[:, :, :-self.padding * 2, :-self.padding * 2]
 
-        #############################################################################
-        # TODO: Implement the convolution backward pass.                            #
-        # Hint:                                                                     #
-        #       1) You may implement the convolution with loops                     #
-        #       2) don't forget padding when computing dx                           #
-        #############################################################################
