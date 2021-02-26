@@ -82,16 +82,29 @@ class Conv2D:
         '''
         input_padded = self.cache
         N, out_C, H_prime, W_prime = dout.shape
-        self.db = np.sum(dout, axis=(0, 2, 3))
-        self.dw = np.zeros((self.out_channels, self.in_channels,  self.kernel_size, self.kernel_size))
         img_c, img_h, img_w = input_padded[0].shape
         kernel_w, kernel_h = (self.kernel_size, self.kernel_size)
-        for out_C_i in range(out_C):
-            for i, x in enumerate(range(0, img_w - kernel_w + 1, self.stride)):
-                for j, y in enumerate(range(0, img_h - kernel_h + 1, self.stride)):
-                    for in_C_i in range(img_c):
-                        img_slice = input_padded[in_C_i, y: y + kernel_h, x: x + kernel_w]
-                        self.dw[out_C_i, in_C_i, j, i] += np.dot(dout, img_slice.T) 
+        self.db = np.sum(dout, axis=(0, 2, 3))
+        self.dw = np.zeros((self.out_channels, self.in_channels,  self.kernel_size, self.kernel_size))
+        self.dx = np.zeros((N, self.in_channels, img_h, img_w))
+        n_pad = ((0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding))
+        d_out_padded = np.pad(dout, pad_width=n_pad, mode='constant')
+        print(dout.shape)
+        print("KERNEL SIZE", self.kernel_size)
+        for img_i in range(N):
+            for out_C_i in range(out_C):
+                for i, x in enumerate(range(0, img_w - W_prime + 1, self.stride)):
+                    for j, y in enumerate(range(0, img_h - H_prime + 1, self.stride)):
+                        for in_C_i in range(img_c):
+                            img_slice = input_padded[img_i, in_C_i, y: y + H_prime, x: x + W_prime]
+                            self.dw[out_C_i, in_C_i, j, i] += np.dot(img_slice.flatten(), dout[img_i, out_C_i].flatten())
+                for i, x in enumerate(range(0, img_w - kernel_w + 1, self.stride)):
+                    for j, y in enumerate(range(0, img_h - kernel_h + 1, self.stride)):
+                        for in_C_i in range(img_c):
+                            kernel = self.weight[out_C_i, in_C_i]
+                            kernel_180 = np.rot90(np.rot90(kernel))
+                            dout_padded_slice = d_out_padded[img_i, out_C_i, y: y + kernel_h, x: x + kernel_w]
+                            self.dx[img_i, in_C_i, j, i] += np.dot(dout_padded_slice.flatten(), kernel_180.flatten())
                 
 
         #############################################################################
