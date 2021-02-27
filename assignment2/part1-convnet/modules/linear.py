@@ -33,12 +33,13 @@ class Linear:
         # TODO: Implement the forward pass.                                         #
         #    HINT: You may want to flatten the input first                          #
         #############################################################################
+        self.cache = x
         x = x.reshape((x.shape[0], self.in_dim))
-        self.cache = np.matmul(x, self.weight) + self.bias
+        out = np.matmul(x, self.weight) + self.bias
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
-        return self.cache
+        return out
 
     def backward(self, dout):
         '''
@@ -47,9 +48,11 @@ class Linear:
         :return: nothing but dx, dw, and db of self should be updated
         '''
         x = self.cache
-        self.dx = self.weight
-        self.db = 0
-        self.dw = x
+        x_reshape = x.reshape((x.shape[0], self.in_dim))
+        self.dx = np.dot(dout, self.weight.T)
+        self.dx = np.reshape(self.dx, (x.shape))
+        self.db = np.sum(dout, axis=0)
+        self.dw = np.dot(x_reshape.T, dout)
         #############################################################################
         # TODO: Implement the convolution backward pass.                            #
         #############################################################################

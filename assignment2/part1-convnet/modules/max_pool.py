@@ -22,11 +22,18 @@ class MaxPooling:
         # Hint:                                                                     #
         #       1) You may implement the process with loops                         #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        N, C, H, W = x.shape
+        kernel_h, kernel_w = (self.kernel_size, self.kernel_size)
+        H_out = int(1 + (H - kernel_h) / self.stride)
+        W_out = int(1 + (W - kernel_w) / self.stride)
         self.cache = (x, H_out, W_out)
+        out = np.zeros((N, C, H_out, W_out))
+        
+        for img_i in range(N):
+            for c_i in range(C):
+                for j, r in enumerate(range(0, H, self.stride)):
+                    for i, c in enumerate(range(0, W, self.stride)):
+                        out[img_i, c_i, j, i] = np.max(x[img_i, c_i, r:r+kernel_h, c:c+kernel_w])
         return out
 
     def backward(self, dout):
@@ -39,10 +46,20 @@ class MaxPooling:
         #############################################################################
         # TODO: Implement the max pooling backward pass.                            #
         # Hint:                                                                     #
-        #       1) You may implement the process with loops                     #
+        #       1) You may implement the process with loops                         #
         #       2) You may find np.unravel_index useful                             #
         #############################################################################
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        N, C, H, W = x.shape
+
+        self.dx = np.zeros(x.shape)
+        kernel_h, kernel_w = (self.kernel_size, self.kernel_size)
+
+        for img_i in range(N):
+            for c_i in range(C):
+                for j, r in enumerate(range(0, H, self.stride)):
+                    for i, c in enumerate(range(0, W, self.stride)):
+                        pool = x[img_i, c_i, r: r+kernel_h, c: c+kernel_w]
+                        mask = (pool == np.max(pool))
+                        self.dx[img_i, c_i, r:r+kernel_h, c:c+kernel_w] = mask*dout[img_i, c_i, j, i]
+
