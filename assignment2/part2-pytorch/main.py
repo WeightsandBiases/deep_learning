@@ -69,10 +69,11 @@ def train(epoch, data_loader, model, optimizer, criterion):
         #       2. Compute batch loss                                               #
         #       3. Compute gradients and update model parameters                    #
         #############################################################################
-
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        out = model(data)
+        loss = criterion(data, target)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
         batch_acc = accuracy(out, target)
 
@@ -107,9 +108,9 @@ def validate(epoch, val_loader, model, criterion):
         #       HINT: torch.no_grad()                                               #
         #############################################################################
 
-        #############################################################################
-        #                              END OF YOUR CODE                             #
-        #############################################################################
+        with torch.no_grad():
+            out = model(data)
+            loss = criterion(data, target)
 
         batch_acc = accuracy(out, target)
 

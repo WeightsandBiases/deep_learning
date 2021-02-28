@@ -15,12 +15,17 @@ class SGD(_BaseOptimizer):
         self.apply_regularization(model)
 
         for idx, m in enumerate(model.modules):
+
             if hasattr(m, 'weight'):
                 #############################################################################
                 # TODO:                                                                     #
                 #    1) Momentum updates for weights                                        #
                 #############################################################################
-                pass
+                print(idx)
+                v_t = self.grad_tracker[idx]['dw']
+                v_t = self.momentum * v_t - self.learning_rate * m.dw
+                m.weight = m.weight + v_t
+                self.grad_tracker[idx]['dw'] = v_t
                 #############################################################################
                 #                              END OF YOUR CODE                             #
                 #############################################################################
@@ -29,7 +34,10 @@ class SGD(_BaseOptimizer):
                 # TODO:                                                                     #
                 #    1) Momentum updates for bias                                           #
                 #############################################################################
-                pass
+                b_t = self.grad_tracker[idx]['db']
+                b_t = self.momentum * b_t - self.learning_rate * m.db
+                m.bias = m.bias + b_t
+                self.grad_tracker[idx]['db'] = b_t
                 #############################################################################
                 #                              END OF YOUR CODE                             #
                 #############################################################################
