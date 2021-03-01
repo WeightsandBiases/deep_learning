@@ -110,7 +110,6 @@ def validate(epoch, val_loader, model, criterion):
         # TODO: Complete the body of training loop                                  #
         #       HINT: torch.no_grad()                                               #
         #############################################################################
-
         with torch.no_grad():
             out = model(data)
             loss = criterion(out, target)

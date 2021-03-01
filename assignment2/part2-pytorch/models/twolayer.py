@@ -15,7 +15,7 @@ class TwoLayerNet(nn.Module):
         self._input_dim = input_dim
         device = self.get_device()
         # two layer network with sigmoid activation
-        self._model = nn.Sequential(
+        self._layers = nn.Sequential(
             nn.Linear(input_dim, hidden_size),
             nn.Sigmoid(),
             nn.Linear(hidden_size, num_classes),
@@ -40,7 +40,7 @@ class TwoLayerNet(nn.Module):
         device = self.get_device()
         N = len(x)
         x = x.reshape((N, self._input_dim))
-        out = self._model(x)
+        out = self._layers(x)
         # convert from one hot encoded to max of prediction
         #############################################################################
         #                              END OF YOUR CODE                             #
