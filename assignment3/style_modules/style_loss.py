@@ -70,8 +70,12 @@ class StyleLoss(nn.Module):
         # You will need to use your gram_matrix function.                            #
         ##############################################################################
 
-        pass
+        L_s = 0
+        for i in range(len(style_layers)):
+            gram = self.gram_matrix(feats[style_layers[i]])
+            L_s += style_weights[i] * torch.sum(torch.square(gram-style_targets[i]))
 
+        return L_s
         ##############################################################################
         #                             END OF YOUR CODE                               #
         ##############################################################################

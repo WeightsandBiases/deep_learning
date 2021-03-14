@@ -21,8 +21,10 @@ class TotalVariationLoss(nn.Module):
         # Otherwise, you may run into the issues later that dynamic graph is broken  #
         # and gradient can not be derived.                                           #
         ##############################################################################
-
-        pass
+        w_variance = torch.sum(torch.square(img[:,:,:,:-1] - img[:,:,:,1:]))
+        h_variance = torch.sum(torch.square(img[:,:,:-1,:] - img[:,:,1:,:]))
+        tv_loss = tv_weight * (h_variance + w_variance)
+        return tv_loss
 
         ##############################################################################
         #                             END OF YOUR CODE                               #
