@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 class FoolingImage:
@@ -25,7 +26,6 @@ class FoolingImage:
 
         # We will fix these parameters for everyone so that there will be
         # comparable outputs
-
         learning_rate = 10  # learning rate is 1
         max_iter = 100  # maximum number of iterations
 
@@ -44,7 +44,17 @@ class FoolingImage:
             # You can print your progress (current prediction and its confidence score)  #
             # over iterations to check your gradient ascent progress.                    #
             ##############################################################################
-            pass
+            score = model(X_fooling_var)
+            score_class = torch.argmax(score)
+            score_prob = F.softmax(score)[0, score_class]
+            # print("iter: {} class: {} conf: {} correct_class: {}".format(it, score_class, score_prob, target_y))
+            if score_class == target_y:
+                break
+            score[0, target_y].backward()
+            grad = X_fooling_var.grad
+            perturbations = learning_rate * grad / torch.norm(grad)
+            X_fooling = X_fooling_var + perturbations
+            X_fooling_var = Variable(X_fooling, requires_grad=True)
             ##############################################################################
             #                             END OF YOUR CODE                               #
             ##############################################################################

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 class StyleLoss(nn.Module):
+
     def gram_matrix(self, features, normalize=True):
         """
             Compute the Gram matrix from features.
@@ -26,7 +27,13 @@ class StyleLoss(nn.Module):
         # matrix product in a batch. Please check the document about how to use it.  #
         ##############################################################################
 
-        pass
+        N, C, H, W = features.size()
+        f_reshape = features.view(N, C, -1)
+        gram = torch.bmm(f_reshape, f_reshape.transpose(1, 2))
+        if normalize:
+            return gram / (H*W*C)
+        else:
+            return gram
         ##############################################################################
         #                             END OF YOUR CODE                               #
         ##############################################################################

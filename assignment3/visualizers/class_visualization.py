@@ -82,8 +82,14 @@ class ClassVisualization:
             # Be very careful about the signs of elements in your code.            #
             ########################################################################
 
+            score = model(img_var)
+            sy = score[0, target_y]
+            R = l2_reg * torch.square(torch.norm(img_var))
+            (sy - R).backward()
 
-
+            grad = img_var.grad
+            img = img + learning_rate * grad
+            img_var = Variable(img, requires_grad=True)
             ########################################################################
             #                             END OF YOUR CODE                         #
             ########################################################################
