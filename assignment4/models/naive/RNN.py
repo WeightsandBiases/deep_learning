@@ -31,7 +31,14 @@ class VanillaRNN(nn.Module):
         #    You MUST NOT use Pytorch RNN layers(nn.RNN, nn.LSTM, etc).             #
         #    Initialize the hidden layer before the output layer!                   #
         #############################################################################
-
+        # input to hidden
+        self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
+        # input to output
+        self.i2o = nn.Linear(input_size + hidden_size, output_size)
+        # softmax
+        self.softmax = nn.LogSoftmax(dim=1)
+        # tanh
+        self.tanh = nn.Tanh()
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
@@ -46,8 +53,11 @@ class VanillaRNN(nn.Module):
                 output (tensor): the output tensor of shape (batch_size, output_size)
                 hidden (tensor): the hidden value of current time step of shape (batch_size, hidden_size)
         """
-
-        output = None
+        combined = torch.cat((input, hidden), 1)
+        hidden = self.i2h(combined)
+        hidden = self.tanh(hidden)
+        output = self.i2o(combined)
+        output = self.softmax(output)
 
         #############################################################################
         # TODO:                                                                     #

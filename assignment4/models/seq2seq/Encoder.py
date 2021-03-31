@@ -31,8 +31,21 @@ class Encoder(nn.Module):
         #          satisfy certain constraint relevant to the decoder.              #
         #       4) A dropout layer                                                  #
         #############################################################################
-
-
+        # 1) embedding layer
+        self._embedding = nn.Embedding(input_size, emb_size)
+        # 2) recurrent layer
+        if model_type == "RNN":
+            self._recurrent = nn.RNN(emb_size, encoder_hidden_size, batch_first=True)
+        else:
+            self._recurrent = nn.LSTM(emb_size, encoder_hidden_size, batch_first=True)
+        # 3) linear layers with ReLU activation
+        self._linear_layers = nn.Sequential(
+            nn.Linear(encoder_hidden_size, encoder_hidden_size),
+            nn.ReLU(),
+            nn.Linear(encoder_hidden_size, decoder_hidden_size)
+            )
+        self._dropout = nn.Dropout(dropout)
+        self._tanh = nn.Tanh()
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
@@ -54,8 +67,10 @@ class Encoder(nn.Module):
         #       recurrent layer                                                     #
         #       Apply tanh activation to the hidden tensor before returning it      #
         #############################################################################
-
-        output, hidden = None, None
+        embedded = self._dropout(self._embedding(input))
+        output, hidden = self._recurrent(embedded)
+        hidden = self._linear_layers(hidden)
+        hidden = self._tanh(hidden)
 
         #############################################################################
         #                              END OF YOUR CODE                             #

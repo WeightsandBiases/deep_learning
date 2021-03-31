@@ -34,22 +34,24 @@ class LSTM(nn.Module):
         ################################################################################
         
         #i_t: input gate
-
-
-
+        self.U_i = nn.Parameter(torch.Tensor(self.input_size, self.hidden_size))
+        self.V_i = nn.Parameter(torch.Tensor(self.hidden_size, self.hidden_size))
+        self.b_i = nn.Parameter(torch.Tensor(self.hidden_size))
 
         # f_t: the forget gate
-
-
-
-
-        # g_t: the cell gate
+        self.U_f = nn.Parameter(torch.Tensor(self.input_size, self.hidden_size))
+        self.V_f = nn.Parameter(torch.Tensor(self.hidden_size, self.hidden_size))
+        self.b_f = nn.Parameter(torch.Tensor(self.hidden_size))
         
-        
-        
+        # c_t: the cell gate
+        self.U_c = nn.Parameter(torch.Tensor(self.input_size, self.hidden_size))
+        self.V_c = nn.Parameter(torch.Tensor(self.hidden_size, self.hidden_size))
+        self.b_c = nn.Parameter(torch.Tensor(self.hidden_size))
         
         # o_t: the output gate
-
+        self.U_o = nn.Parameter(torch.Tensor(self.input_size, self.hidden_size))
+        self.V_o = nn.Parameter(torch.Tensor(self.hidden_size, self.hidden_size))
+        self.b_o = nn.Parameter(torch.Tensor(self.hidden_size))
 
 
 
@@ -67,7 +69,7 @@ class LSTM(nn.Module):
          
     def forward(self, x: torch.Tensor, init_states=None):
         """Assumes x is of shape (batch, sequence, feature)"""
-        
+        batch_len, sequence_len, feature_len = x.size()
         ################################################################################
         # TODO:                                                                        #
         #   Implement the forward pass of LSTM. Please refer to the equations in the   #
@@ -75,7 +77,24 @@ class LSTM(nn.Module):
         #   steps and return only the hidden and cell state, h_t and c_t.              # 
         #   Note that this time you are also iterating over all of the time steps.     #
         ################################################################################
-        h_t, c_t = None, None
+        if init_states is None:
+            h_t, c_t = (
+                torch.zeros(batch_len, self.hidden_size).to(x.device),
+                torch.zeros(batch_len, self.hidden_size).to(x.device),
+            )
+        else:
+            h_t, c_t = init_states
+
+        for t in range(sequence_len):
+            x_t = x[:, t, :]
+            # input 
+            i_t = torch.sigmoid(torch.mm(x_t, self.U_i) + torch.mm(h_t, self.V_i) + self.b_i)
+            f_t = torch.sigmoid(torch.mm(x_t, self.U_f) + torch.mm(h_t, self.V_f) + self.b_f)
+            g_t = torch.tanh(torch.mm(x_t, self.U_c) + torch.mm(h_t, self.V_c) + self.b_c)
+            o_t = torch.sigmoid(torch.mm(x_t, self.U_o) + torch.mm(h_t, self.V_o) + self.b_o)
+            c_t = f_t * c_t + i_t * g_t
+            h_t = o_t * torch.tanh(c_t)
+
         ################################################################################
         #                              END OF YOUR CODE                                #
         ################################################################################

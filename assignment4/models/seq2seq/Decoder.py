@@ -27,7 +27,20 @@ class Decoder(nn.Module):
         #       3) A single linear layer with a (log)softmax layer for output       #
         #       4) A dropout layer                                                  #
         #############################################################################
-
+        # 1) embedding layer
+        self._embedding = nn.Embedding(output_size, emb_size)
+        # 2) recurrent layer
+        if model_type == "RNN":
+            self._recurrent = nn.RNN(emb_size, decoder_hidden_size, batch_first=True)
+        else:
+            self._recurrent = nn.LSTM(emb_size, decoder_hidden_size, batch_first=True)
+        # 3) linear layers with softmax layer
+        self._linear_layers = nn.Sequential(
+            nn.Linear(decoder_hidden_size, output_size),
+            nn.LogSoftmax(dim=2)
+            )
+        # 4) a dropout class
+        self._dropout = nn.Dropout(dropout)
 
         
         #############################################################################
@@ -52,9 +65,10 @@ class Decoder(nn.Module):
         #       Apply linear layer and softmax activation to output tensor before   #
         #       returning it.                                                       #
         #############################################################################
-     
-        output, hidden = None, None
-     
+        embedded = self._dropout(self._embedding(input))
+        output, hidden= self._recurrent(embedded, hidden)
+        output = self._linear_layers(output)
+        output = output[:,-1,:]
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################

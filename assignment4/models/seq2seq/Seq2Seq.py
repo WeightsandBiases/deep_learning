@@ -22,7 +22,9 @@ class Seq2Seq(nn.Module):
         #    that the models are on the same device (CPU/GPU). This should take no  #
         #    more than 2 lines of code.                                             #
         #############################################################################
-
+        self._encoder = encoder.to(device)
+        self._decoder = decoder.to(device)
+        self.device = device
 
         #############################################################################
         #                              END OF YOUR CODE                             #
@@ -38,7 +40,7 @@ class Seq2Seq(nn.Module):
 
         batch_size = source.shape[0]
         if out_seq_len is None:
-            seq_len = source.shape[1]
+            out_seq_len = source.shape[1]
 
         
         #############################################################################
@@ -57,8 +59,18 @@ class Seq2Seq(nn.Module):
         #          will have to be manipulated before being fed in as the decoder   #
         #          input at the next time step.                                     #
         #############################################################################
+        # tensor to store decoder outputs
+        outputs = torch.zeros(batch_size, out_seq_len, self._decoder.output_size).to(self.device)
+        # last hidden state of the encoder is used as the initial hidden state of decoder
+        # The first input for the decoder should be the <sos> token
+        input_decoder = source[:,0:1]
+        output, hidden = self._encoder(source)
+        # input = torch.unsqueeze(source[0, :], 0)
+        for t in range(0, out_seq_len):
+            output, hidden = self._decoder(input_decoder, hidden)
+            input_decoder = output.argmax(1).unsqueeze(0)
+            outputs[0:batch_size,t] = output
 
-        outputs=None
 
         #############################################################################
         #                              END OF YOUR CODE                             #
