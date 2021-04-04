@@ -68,7 +68,7 @@ class Seq2Seq(nn.Module):
         # input = torch.unsqueeze(source[0, :], 0)
         for t in range(0, out_seq_len):
             output, hidden = self._decoder(input_decoder, hidden)
-            input_decoder = output.argmax(1).unsqueeze(0)
+            input_decoder = output.argmax(1).unsqueeze(1)
             outputs[0:batch_size,t] = output
 
 

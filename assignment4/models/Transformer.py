@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from torch import nn
 import random
+import math
 
 ####### Do not modify these imports.
 
@@ -54,7 +55,8 @@ class TransformerTranslator(nn.Module):
         # Initialize the word embeddings before the positional encodings.            #
         # Don’t worry about sine/cosine encodings- use positional encodings.         #
         ##############################################################################
-        
+        self.embed_word = nn.Embedding(input_size, hidden_dim).to(device)
+        self.embed_pos = nn.Embedding(max_length, hidden_dim).to(device)
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
@@ -66,18 +68,18 @@ class TransformerTranslator(nn.Module):
         ##############################################################################
         
         # Head #1
-        self.k1 = nn.Linear(self.hidden_dim, self.dim_k)
-        self.v1 = nn.Linear(self.hidden_dim, self.dim_v)
-        self.q1 = nn.Linear(self.hidden_dim, self.dim_q)
+        self.k1 = nn.Linear(self.hidden_dim, self.dim_k).to(device)
+        self.v1 = nn.Linear(self.hidden_dim, self.dim_v).to(device)
+        self.q1 = nn.Linear(self.hidden_dim, self.dim_q).to(device)
         
         # Head #2
-        self.k2 = nn.Linear(self.hidden_dim, self.dim_k)
-        self.v2 = nn.Linear(self.hidden_dim, self.dim_v)
-        self.q2 = nn.Linear(self.hidden_dim, self.dim_q)
+        self.k2 = nn.Linear(self.hidden_dim, self.dim_k).to(device)
+        self.v2 = nn.Linear(self.hidden_dim, self.dim_v).to(device)
+        self.q2 = nn.Linear(self.hidden_dim, self.dim_q).to(device)
         
-        self.softmax = nn.Softmax(dim=2)
-        self.attention_head_projection = nn.Linear(self.dim_v * self.num_heads, self.hidden_dim)
-        self.norm_mh = nn.LayerNorm(self.hidden_dim)
+        self.softmax = nn.Softmax(dim=2).to(device)
+        self.attention_head_projection = nn.Linear(self.dim_v * self.num_heads, self.hidden_dim).to(device)
+        self.norm_mh = nn.LayerNorm(self.hidden_dim).to(device)
 
         
         ##############################################################################
@@ -85,7 +87,12 @@ class TransformerTranslator(nn.Module):
         # Deliverable 3: Initialize what you need for the feed-forward layer.        # 
         # Don't forget the layer normalization.                                      #
         ##############################################################################
-        
+        self.ffl = nn.Sequential(
+                nn.Linear(hidden_dim, dim_feedforward),
+                nn.ReLU(),
+                nn.Linear(dim_feedforward, hidden_dim),
+            ).to(device)
+        self.nl = nn.LayerNorm(hidden_dim).to(device)
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
@@ -95,7 +102,7 @@ class TransformerTranslator(nn.Module):
         # TODO:
         # Deliverable 4: Initialize what you need for the final layer (1-2 lines).   #
         ##############################################################################
-        
+        self.fl = nn.Linear(hidden_dim, output_size).to(device)
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
@@ -110,19 +117,17 @@ class TransformerTranslator(nn.Module):
 
         :returns: the model outputs. Should be normalized scores of shape (N,1).
         '''
-
+        inputs = inputs.to(self.device)
         #############################################################################
         # TODO:
         # Deliverable 5: Implement the full Transformer stack for the forward pass. #
         # You will need to use all of the methods you have previously defined above.#
         # You should only be calling ClassificationTransformer class methods here.  #
         #############################################################################
-        outputs = None
-        
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
-        return outputs
+        return self.final_layer(self.feedforward_layer((self.multi_head_attention(self.embed(inputs)))))
     
     
     def embed(self, inputs):
@@ -130,19 +135,27 @@ class TransformerTranslator(nn.Module):
         :param inputs: intTensor of shape (N,T)
         :returns embeddings: floatTensor of shape (N,T,H)
         """
-        embeddings = None
         #############################################################################
         # TODO:
         # Deliverable 1: Implement the embedding lookup.                            #
         # Note: word_to_ix has keys from 0 to self.vocab_size - 1                   #
         # This will take a few lines.                                               #
         #############################################################################
-      
+        inputs = inputs.to(self.device)
+        embeddings_word = self.embed_word(inputs)
+        word_pos = torch.Tensor(range(self.max_length)).to(torch.long)
+        word_pos = word_pos.to(self.device)
+        embeddings_pos = self.embed_pos(word_pos)
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
-        return embeddings
-        
+        return (embeddings_word + embeddings_pos)
+
+    def attention(self, q, k, v):
+        scores = torch.matmul(q, k.transpose(-2, -1)) /  math.sqrt(self.dim_k)
+        scores = self.softmax(scores)
+        return torch.matmul(scores, v)
+
     def multi_head_attention(self, inputs):
         """
         :param inputs: float32 Tensor of shape (N,T,H)
@@ -158,12 +171,24 @@ class TransformerTranslator(nn.Module):
         # Deliverable 2: Implement multi-head self-attention followed by add + norm.#
         # Use the provided 'Deliverable 2' layers initialized in the constructor.   #
         #############################################################################
-        outputs = None
-        
+        inputs = inputs.to(self.device)
+        k1 = self.k1(inputs)
+        v1 = self.v1(inputs)
+        q1 = self.q1(inputs)
+        k2 = self.k2(inputs)
+        v2 = self.v2(inputs)
+        q2 = self.q2(inputs)
+        scores_1 = self.attention(q1, k1, v1)
+        scores_2 = self.attention(q2, k2, v2)
+
+        concat = torch.cat((scores_1, scores_2), 2)
+        output = self.attention_head_projection(concat)
+        output = inputs + output
+        output = self.norm_mh(output)
         ##############################################################################
         #                               END OF YOUR CODE                             #
         ##############################################################################
-        return outputs
+        return output
     
     
     def feedforward_layer(self, inputs):
@@ -179,7 +204,9 @@ class TransformerTranslator(nn.Module):
         # initialized them.                                                         #
         # This should not take more than 3-5 lines of code.                         #
         #############################################################################
-        outputs = None
+        inputs = inputs.to(self.device)
+        outputs = self.ffl(inputs)
+        outputs = self.nl(inputs + outputs)
         
         ##############################################################################
         #                               END OF YOUR CODE                             #
@@ -198,7 +225,8 @@ class TransformerTranslator(nn.Module):
         # Deliverable 4: Implement the final layer for the Transformer Translator.  #
         # This should only take about 1 line of code.                               #
         #############################################################################
-        outputs = None
+        inputs = inputs.to(self.device)
+        outputs = self.fl(inputs)
                 
         ##############################################################################
         #                               END OF YOUR CODE                             #

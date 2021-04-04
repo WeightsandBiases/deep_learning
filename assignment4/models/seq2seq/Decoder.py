@@ -68,7 +68,7 @@ class Decoder(nn.Module):
         embedded = self._dropout(self._embedding(input))
         output, hidden= self._recurrent(embedded, hidden)
         output = self._linear_layers(output)
-        output = output[:,-1,:]
+        output = output.squeeze(1)
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
